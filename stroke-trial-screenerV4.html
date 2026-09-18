@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f1f5f9">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Trial screen">
+<title>Trial screen</title>
+<style>
+  :root {
+    --bg: #f1f5f9; --card: #ffffff; --line: #e2e8f0; --line-soft: #f1f5f9;
+    --ink: #0f172a; --ink-2: #334155; --ink-3: #475569;
+    --muted: #64748b; --muted-2: #94a3b8;
+    --ok: #10b981; --bad: #be123c; --warn: #b45309; --warn-bg: #fffbeb; --warn-line: #fde68a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+
+  header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+  header.top h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; margin: 0; }
+
+  .grid { display: grid; gap: 20px; grid-template-columns: minmax(0,1fr) minmax(0,1.05fr); align-items: start; }
+  @media (max-width: 900px) { .grid { grid-template-columns: minmax(0,1fr); } }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+  .card.pad { padding: 20px; }
+
+  .step { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }
+  .n {
+    font-size: 11px; font-weight: 700; color: var(--muted); border: 1px solid var(--line);
+    border-radius: 3px; padding: 1px 6px; letter-spacing: .04em; background: #fff;
+  }
+  .step h2 { font-size: 15px; font-weight: 600; color: var(--ink-2); margin: 0; }
+
+  .field { margin-bottom: 24px; }
+  .field:last-child { margin-bottom: 0; }
+  .field-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+  .field-head label { font-size: 15px; font-weight: 600; color: var(--ink-2); }
+  .hint { font-size: 12px; color: var(--muted); }
+
+  .choices { display: grid; gap: 6px; }
+  .choice {
+    padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 500;
+    border: 1px solid #cbd5e1; background: #fff; color: var(--ink-3);
+    text-align: left; line-height: 1.25; cursor: pointer; font-family: inherit;
+    transition: border-color .12s, background .12s;
+  }
+  .choice:hover { border-color: var(--muted); }
+  .choice[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .choice:focus-visible, button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+  input[type=number] {
+    width: 128px; padding: 10px 12px; border-radius: 6px; border: 1px solid #cbd5e1;
+    font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums;
+    color: var(--ink); background: #fff; font-family: inherit;
+  }
+  .num-row { display: flex; align-items: center; gap: 8px; }
+  .num-row .suffix { font-size: 13px; color: var(--muted); }
+  .two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 480px) { .two-up { grid-template-columns: 1fr; } }
+
+  .btn-plain { padding: 8px 14px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; color: var(--ink); }
+  .btn-plain:hover { border-color: var(--muted); }
+
+  .panel-head { padding: 16px 20px 12px; }
+  .panel-head.divide { border-bottom: 1px solid var(--line-soft); }
+  .panel-body-msg { padding: 0 20px 20px; font-size: 14px; line-height: 1.4; color: var(--ink-3); }
+
+  .nudge { margin: 0 20px 16px; background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 4px; padding: 10px 12px; font-size: 13px; color: var(--warn); line-height: 1.4; }
+
+  /* ---- Consider trial blocks ---- */
+  .tblock { display: flex; align-items: stretch; }
+  .tblock + .tblock { border-top: 1px solid var(--line-soft); }
+  .tbar { width: 6px; flex-shrink: 0; }
+  .tbody { padding: 14px 16px; flex: 1; min-width: 0; }
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 700; }
+  .why { font-size: 13.5px; color: var(--ink-3); margin: 6px 0 0; line-height: 1.35; }
+  .tag { font-size: 11px; color: var(--muted); font-weight: 500; margin-left: 8px; }
+
+  .softbox { margin-top: 10px; background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 4px; padding: 8px 10px; }
+  .softbox p { font-size: 13px; color: var(--warn); margin: 0; line-height: 1.35; }
+  .softbox p + p { margin-top: 4px; }
+
+  .exbar { margin: 14px -16px -14px; padding: 12px 16px; border-top: 1px solid var(--line); background: #f8fafc; }
+  .exhead { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; text-align: left; }
+  .exhead .lead { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .exhead .t { font-size: 15px; font-weight: 600; color: var(--ink-2); }
+  .exhead .right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .exhead .s { font-size: 12px; color: var(--muted); }
+  .chev { width: 9px; height: 9px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); margin-top: -3px; transition: transform .15s; }
+  .exhead[aria-expanded="true"] .chev { transform: rotate(-135deg); margin-top: 2px; }
+  .exlist { margin-top: 10px; }
+  .exlist label { display: flex; align-items: flex-start; gap: 9px; padding: 5px 6px; margin: 0 -6px; border-radius: 4px; cursor: pointer; }
+  .exlist label:hover { background: #eef2f7; }
+  .exlist input { margin: 2px 0 0; width: 15px; height: 15px; accent-color: var(--bad); flex-shrink: 0; }
+  .exlist span { font-size: 13px; line-height: 1.35; color: var(--ink-3); }
+  .cleared { font-size: 13px; color: #047857; margin: 10px 0 0; font-weight: 500; }
+
+  .ruled { padding: 14px 20px; background: #f8fafc; border-top: 1px solid var(--line-soft); }
+  .ruled .lbl { font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--muted); margin: 0 0 8px; }
+  .ruled ul { list-style: none; margin: 0; padding: 0; }
+  .ruled li { font-size: 13px; color: var(--muted); line-height: 1.35; display: flex; gap: 8px; margin-bottom: 5px; }
+  .ruled li:last-child { margin-bottom: 0; }
+
+  /* ---- after the case: quiet until the criteria are met ---- */
+  .post { border: 1px solid var(--line); border-radius: 8px; background: #f8fafc; overflow: hidden; display: flex; align-items: stretch; }
+  .post.met { background: #fff; border-color: #bbf7d0; }
+  .post .pbar { width: 4px; flex-shrink: 0; background: #cbd5e1; }
+  .post.met .pbar { width: 6px; background: #15803d; }
+  .post .pbody { padding: 12px 14px; flex: 1; min-width: 0; }
+  .post .ptop { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .post .pname { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .01em; }
+  .post.met .pname { font-size: 14px; color: #15803d; }
+  .post .pkicker { font-size: 11px; color: var(--muted-2); font-weight: 500; }
+  .post .pmsg { font-size: 13px; color: var(--muted); line-height: 1.4; margin: 5px 0 0; }
+  .post.met .pmsg { color: var(--ink-3); }
+  .post .pmore { background: none; border: 0; padding: 0; margin-top: 8px; font-family: inherit; font-size: 12px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+  .post ul { list-style: none; margin: 10px 0 0; padding: 0; }
+  .post li { font-size: 13px; color: var(--ink-3); line-height: 1.35; display: flex; gap: 8px; margin-bottom: 5px; }
+  .post li .b { color: var(--muted-2); flex-shrink: 0; }
+
+  /* ---- Protocol screen ---- */
+  .trial-row + .trial-row { border-top: 1px solid var(--line-soft); }
+  .trial-btn { width: 100%; text-align: left; background: none; border: 0; padding: 14px 20px; cursor: pointer; font-family: inherit; display: flex; gap: 12px; align-items: flex-start; }
+  .trial-btn:hover { background: #f8fafc; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .dot.in { background: var(--ok); } .dot.pending { background: #cbd5e1; } .dot.out { background: #e2e8f0; }
+  .trial-name { font-size: 14.5px; font-weight: 700; }
+  .trial-name.out { color: var(--muted-2); }
+  .trial-meta { font-size: 11px; color: var(--muted-2); font-variant-numeric: tabular-nums; margin-left: 8px; }
+  .trial-line { font-size: 13px; margin: 4px 0 0; line-height: 1.35; color: var(--ink-3); }
+  .trial-line.out { color: var(--muted); }
+  .trial-line.warn { color: var(--warn); }
+
+  .detail { padding: 4px 20px 20px; background: #f8fafc; border-top: 1px solid var(--line-soft); }
+  .detail .full { font-size: 13px; font-weight: 500; color: var(--ink-2); margin: 8px 0 12px; }
+  .facts { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 16px; }
+  @media (max-width: 560px) { .facts { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  .fact { background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; }
+  .fact dt { font-size: 11px; color: var(--muted); }
+  .fact dd { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; margin: 2px 0 0; }
+  .lbl2 { font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+  .val { font-size: 13px; color: var(--ink-3); margin: 0 0 16px; }
+  .detail ul { list-style: none; padding: 0; margin: 0 0 16px; }
+  .detail li { font-size: 13px; line-height: 1.35; color: var(--ink-3); display: flex; gap: 8px; margin-bottom: 6px; }
+  .detail li .b { color: var(--muted-2); flex-shrink: 0; }
+  .detail li.block { color: var(--bad); }
+  .note { font-size: 13px; line-height: 1.4; color: var(--ink-3); background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: 12px; }
+  .srcs { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+  .srcs a { font-size: 13px; font-weight: 500; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; text-decoration-color: var(--muted-2); border-radius: 3px; }
+  .srcs a:hover { text-decoration-color: var(--ink); }
+  .srcs .none { font-size: 13px; color: var(--muted); }
+
+  .foot { font-size: 12.5px; color: var(--muted); line-height: 1.55; padding: 0 4px; margin-top: 20px; }
+  .ver { font-size: 12px; color: var(--muted-2); padding: 0 4px; margin-top: 10px; }
+  .bold { font-weight: 600; }
+  .stack > * + * { margin-top: 20px; }
+
+  /* ---------------- phones ---------------- */
+  @media (max-width: 560px) {
+    .wrap { padding: 16px 12px 40px; }
+    header.top { margin-bottom: 16px; }
+    header.top h1 { font-size: 22px; }
+    .grid { gap: 14px; }
+    .stack > * + * { margin-top: 14px; }
+    .card.pad { padding: 16px; }
+    .field { margin-bottom: 18px; }
+    #sites { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+    .panel-head { padding: 14px 16px 10px; }
+    .panel-body-msg { padding: 0 16px 16px; }
+    .nudge { margin: 0 16px 14px; }
+    .tbody { padding: 14px; }
+    .exbar { margin: 14px -14px -14px; padding: 12px 14px; }
+    .ruled, .post { padding-left: 16px; padding-right: 16px; }
+    .trial-btn { padding: 14px 16px; }
+    .detail { padding: 4px 16px 16px; }
+  }
+
+  /* ---------------- touch ---------------- */
+  @media (hover: none) {
+    .choice { padding: 13px 10px; }
+    .exlist label { padding: 10px 6px; }
+    .exlist input { width: 18px; height: 18px; margin-top: 1px; }
+    .trial-btn { padding-top: 16px; padding-bottom: 16px; }
+    .choice:hover, .exlist label:hover, .trial-btn:hover { background: inherit; border-color: #cbd5e1; }
+    .choice[aria-pressed="true"]:hover { background: var(--ink); border-color: var(--ink); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div><h1>Trial screen</h1></div>
+    <button class="btn-plain" id="reset">Clear for next patient</button>
+  </header>
+
+  <div class="grid">
+
+    <!-- ================= STEP 1 ================= -->
+    <section class="card pad">
+      <div class="step"><span class="n">1</span><h2>Patient</h2></div>
+
+      <div class="field">
+        <div class="field-head"><label>Occlusion site</label></div>
+        <div class="choices" id="sites" style="grid-template-columns: repeat(3, minmax(0,1fr));"></div>
+      </div>
+
+      <div class="field">
+        <div class="field-head"><label for="hours">Time from last known well</label><span class="hint">hours, decimals fine</span></div>
+        <div class="num-row"><input type="number" id="hours" min="0" step="0.5" placeholder="0.0" inputmode="decimal"><span class="suffix">h</span></div>
+      </div>
+
+      <div class="field" id="arrivalField" hidden>
+        <div class="field-head"><label>How did they arrive?</label><span class="hint">splits DUSK from STEP-B under 4.5 h</span></div>
+        <div class="choices" id="arrival" style="grid-template-columns: repeat(2, minmax(0,1fr));"></div>
+      </div>
+
+      <div class="field">
+        <div class="field-head"><label for="nihss">NIHSS</label></div>
+        <div class="num-row"><input type="number" id="nihss" min="0" max="42" step="1" placeholder="0"></div>
+      </div>
+
+      <div class="two-up">
+        <div class="field">
+          <div class="field-head"><label for="age">Age</label></div>
+          <div class="num-row"><input type="number" id="age" min="0" max="120" step="1" placeholder="0" style="width:104px"><span class="suffix">yrs</span></div>
+        </div>
+        <div class="field">
+          <div class="field-head"><label>Pre-stroke mRS</label></div>
+          <div class="choices" id="mrs" style="grid-template-columns: repeat(6, minmax(0,1fr));"></div>
+        </div>
+      </div>
+
+      <p class="hint" style="margin:16px 0 0;line-height:1.5">
+        Age warns but never stops. mRS warns for the mRS 0–2 trials, but it's an inclusion for TESTED — enter it, or
+        TESTED won't surface.
+      </p>
+    </section>
+
+    <!-- ================= STEPS 2 & 3 ================= -->
+    <section class="stack">
+      <div class="card" id="consider"></div>
+      <div class="card" id="screenPanel"></div>
+      <div id="postPanel"></div>
+      <p class="foot">
+        Criteria transcribed from registry records and site documents, September 2026. Protocols get amended and sites
+        run under different versions — reconcile every line against your IRB-approved protocol before using this on a
+        real screen. This narrows the list; it doesn't replace the eligibility checklist or the PI's call.
+      </p>
+      <p class="ver">Version 1.2 · September 2026</p>
+    </section>
+
+  </div>
+</div>
+
+<script>
+/* ============================================================================
+   TRIAL CRITERIA CONFIG — EDIT THIS BLOCK, NOT THE ENGINE BELOW
+   mrs is [min, max] — most trials are [0,2]; TESTED is [3,4].
+   ========================================================================== */
+
+const TRIALS = {
+  STEP_A: {
+    id: "STEP_A", name: "STEP-A",
+    full: "StrokeNet Thrombectomy Endovascular Platform — Domain A, low-NIHSS LVO stratum",
+    nct: "NCT06289985", tone: "red",
+    sites: ["ICA","M1"], window: [0,24], nihss: [0,5], age: [18,null], mrs: [0,2],
+    core: [
+      "Complete occlusion of intracranial ICA or M1 (some focal deficit attributable to it even if NIHSS 0)",
+      "Presentation within 24 h of last known well",
+      "Arterial puncture achievable within 2 h of qualifying CTA/MRA or CTP/MRP"
+    ],
+    excl: ["ich","aspects","tandem","multiterritory","icad","seizure","pregnant","terminal","platelets","midline"],
+    notes: "Imaging only needs repeating if the NIHSS improves significantly before randomization."
+  },
+  STEP_B: {
+    id: "STEP_B", name: "STEP-B",
+    full: "StrokeNet Thrombectomy Endovascular Platform — Domain A, medium/distal vessel stratum",
+    nct: "NCT06289985", tone: "red",
+    sites: ["M2_ND","M3"], window: [0,24], nihss: [8,null], age: [18,null], mrs: [0,2],
+    core: [
+      "Non-dominant / co-dominant M2 (serving ≤50% of MCA territory) or M3 — visualized occlusion or Tmax >4 s deficit",
+      "Presentation within 24 h of last known well",
+      "Puncture achievable within 2 h of qualifying imaging",
+      "If onset >6 h: core must be <50% of the territory supplied by the occluded vessel"
+    ],
+    excl: ["ich","aspects","tandem","multiterritory","icad","seizure","pregnant","terminal","platelets","midline"]
+  },
+  RP_PIVOTAL: {
+    id: "RP_PIVOTAL", name: "RP-PIVOTAL",
+    full: "RapidPulse Cyclic Aspiration System pivotal study",
+    nct: "NCT06029491", tone: "purple",
+    sites: ["ICA","M1","M2_ND","VERT","BASILAR"], window: [0,8], nihss: [6,null], age: [18,80], mrs: [0,1],
+    core: [
+      "Angiographic LVO: intracranial ICA, M1, M2, vertebral or basilar",
+      "Treatable within 8 h of onset / last known normal",
+      "Treatable within 120 min of the qualifying CT/MR",
+      "Candidate for frontline ADAPT (direct aspiration first pass)"
+    ],
+    excl: ["ich","aspects","icad","tandem","terminal"],
+    notes: "Pre-morbid mRS must be 0–1 — tighter than the other trials on this list. The protocol permits M2, but this site no longer enrolls dominant M2 here; those go to ATHENA."
+  },
+  ATHENA: {
+    id: "ATHENA", name: "ATHENA",
+    full: "Anaconda ANA Funnel Catheter with stent retriever",
+    nct: "NCT06370182", tone: "blue",
+    sites: ["ICA","M1","M2_D"], window: [0,24], nihss: [6,25], age: [22,85], mrs: [0,2],
+    core: [
+      "Occlusion (eTICI ≤1) of terminal ICA, M1, or dominant/proximal M2",
+      "Treatable within 24 h of last seen asymptomatic (puncture time)",
+      "Core ≤50 mL on CTP/MRP, or ASPECTS 6–10 (5 permitted at MRI-scoring centers)",
+      "Indicated for thrombectomy with an approved stent retriever"
+    ],
+    excl: ["ich","aspects","multiterritory","priorstroke","inr","stent"],
+    notes: "Window set to 24 h per your site. The public registry record lists 16 h — confirm the amendment your site is running under. Age floor is 22, not 18: the only trial here that excludes 18–21."
+  },
+  DUSK: {
+    id: "DUSK", name: "DUSK",
+    full: "Combined Thrombectomy for Distal Medium Vessel Occlusion Stroke",
+    nct: "NCT05983757", tone: "amber",
+    sites: ["M2_ND","M3","ACA","PCA"], window: [0,12], nihss: [6,null], age: [18,null], mrs: [0,2],
+    core: [
+      "No proximal occlusion — patient is not an EVT candidate under guideline care",
+      "Ineligible for, or failed, IV thrombolysis",
+      "Target vessel diameter 1.5–2.5 mm",
+      "NIHSS >5 at randomization"
+    ],
+    excl: ["ich","improving","othertier","core50","contrast","terminal"],
+    notes: "Randomization strata run 0–4.5, 4.5–8 and 9–12 h from time last known well."
+  },
+  TESTED: {
+    id: "TESTED", name: "TESTED",
+    full: "Treatment with Endovascular intervention for STroke patients with Existing Disability",
+    nct: "NCT05911568", tone: "teal",
+    sites: ["ICA","M1","M2_D"], window: [0,24], nihss: [6,null], age: [18,null], mrs: [3,4],
+    core: [
+      "Pre-stroke mRS 3–4, sustained for at least 3 months before onset",
+      "Occlusion of intracranial ICA, M1 or dominant M2 on baseline CT or MR angiogram",
+      "Presenting to the study hospital within 24 h of last known well",
+      "CT ASPECTS ≥3, or MRI ASPECTS ≥4",
+      "NIHSS ≥6",
+      "Consent from the patient if competent, or from a legally authorized representative"
+    ],
+    excl: ["t_terminal","t_unassessed","t_temporary","t_inpatient","aspects_lt3"],
+    notes: "The one trial here that requires pre-stroke disability. mRS 3–4 is an inclusion, not an exclusion — it takes the patients every other trial turns down, so it never competes with them for the same person. ASPECTS floor is ≥3, far more permissive than the ≥6 elsewhere."
+  }
+};
+
+/* SUMMIT RISE sits outside the acute screen — see the "After the case" block.
+   Eligibility depends on the device used on the first pass, which nobody knows
+   at screening, and consent runs up to 72 h after the procedure. */
+const POST_CASE = {
+  id: "SUMMIT_RISE", name: "SUMMIT RISE",
+  full: "SUMMIT RISE — Route 92 Medical Reperfusion System registry",
+  nct: "NCT07436156",
+  age: [18, null],
+  punctureWindow: 8,
+  core: [
+    "Route 92 Medical Reperfusion System used on the first attempted pass",
+    "Endovascular treatment initiated (groin puncture) within 8 h of last known well",
+    "Age ≥18",
+    "Consent documented within 72 h following the thrombectomy procedure"
+  ],
+  notes: "Registry lists no exclusion criteria. No NIHSS, mRS, ASPECTS or vessel requirement. A patient randomized into RP-PIVOTAL or ATHENA gets that trial's device on the first pass, so they can't also be a SUMMIT RISE case.",
+  todo: "Point 1 of your criteria refers to a device table — confirm which Route 92 products qualify and add them here."
+};
+
+const SOURCES = {
+  STEP_A: [
+    { label: "StrokeNet Domain A synopsis", url: "https://www.nihstrokenet.org/trials/step-trial/domain-a-synopsis" },
+    { label: "Registry record", url: "https://clinicaltrials.gov/study/NCT06289985" }
+  ],
+  STEP_B: [
+    { label: "StrokeNet Domain A synopsis", url: "https://www.nihstrokenet.org/trials/step-trial/domain-a-synopsis" },
+    { label: "Registry record", url: "https://clinicaltrials.gov/study/NCT06289985" }
+  ],
+  RP_PIVOTAL:  [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT06029491" }],
+  ATHENA:      [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT06370182" }],
+  DUSK:        [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT05983757" }],
+  SUMMIT_RISE: [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT07436156" }],
+  TESTED:      [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT05911568" }]
+};
+
+const SITES = [
+  { id: "ICA",     label: "ICA (intracranial)" },
+  { id: "M1",      label: "M1" },
+  { id: "M2_D",    label: "Dominant M2" },
+  { id: "M2_ND",   label: "Non-dom / co-dom M2" },
+  { id: "M3",      label: "M3" },
+  { id: "ACA",     label: "ACA" },
+  { id: "PCA",     label: "PCA" },
+  { id: "VERT",    label: "Vertebral" },
+  { id: "BASILAR", label: "Basilar" }
+];
+const SITE_LABEL = Object.fromEntries(SITES.map(s => [s.id, s.label]));
+
+const FLAG_LABEL = {
+  ich:            "Any intracranial hemorrhage on baseline imaging",
+  aspects:        "ASPECTS <6 on CT (<7 on MRI)",
+  aspects_lt3:    "ASPECTS <3 on CT (<4 on MRI)",
+  core50:         "Core >50 mL or >1/3 of the occluded territory",
+  tandem:         "Tandem occlusion",
+  multiterritory: "Occlusion or symptomatic stroke in a second territory",
+  icad:           "Known or suspected ICAD at the target",
+  seizure:        "Seizure at stroke onset",
+  pregnant:       "Known pregnancy",
+  terminal:       "Life expectancy under 6 months",
+  platelets:      "Platelets <100,000/µL",
+  inr:            "On a vitamin K antagonist with INR >3.0",
+  midline:        "Midline shift >5 mm",
+  priorstroke:    "Ischemic stroke within the past year",
+  stent:          "Pre-existing stent at or proximal to the occlusion",
+  improving:      "Rapidly improving, likely NIHSS <5 at randomization",
+  othertier:      "Significant ischemia in a non-target territory",
+  contrast:       "Contraindication to contrast CT or MR",
+  t_terminal:     "Terminal cancer or terminal illness at the time of stroke",
+  t_unassessed:   "Pre-stroke functional status could not be assessed during the hospital stay",
+  t_temporary:    "Pre-stroke disability judged temporary (recovering from recent illness or injury)",
+  t_inpatient:    "Stroke onset during an acute inpatient hospital stay"
+};
+
+const TONE = {
+  red:    { bar: "#e11d48", chipInk: "#fff",    text: "#be123c" },
+  purple: { bar: "#6d28d9", chipInk: "#fff",    text: "#6d28d9" },
+  blue:   { bar: "#0369a1", chipInk: "#fff",    text: "#0369a1" },
+  amber:  { bar: "#f59e0b", chipInk: "#0f172a", text: "#b45309" },
+  teal:   { bar: "#0f766e", chipInk: "#fff",    text: "#0f766e" },
+  slate:  { bar: "#475569", chipInk: "#fff",    text: "#475569" }
+};
+
+/* ============================================================================
+   YOUR CENTER'S ROUTING
+   ========================================================================== */
+
+function centerRoute({ site, hours: h, nihss: n, arrival, mrs }) {
+  const out = [];
+  const push = (id, why) => out.push({ id, why });
+  const m = mrs === "" ? null : Number(mrs);
+  const disabled = m === 3 || m === 4;
+
+  /* TESTED takes the pre-stroke-disabled patients the others exclude */
+  if (disabled && (site === "ICA" || site === "M1" || site === "M2_D") && h < 24 && n >= 6) {
+    push("TESTED", "ICA/M1/dominant M2 within 24 h, NIHSS ≥6, pre-stroke mRS " + m);
+  }
+
+  if (site === "ICA" || site === "M1") {
+    if (h < 8) {
+      if (n <= 5) push("STEP_A", "ICA/M1 under 8 h with NIHSS 0–5");
+      if (n >= 6) push("RP_PIVOTAL", "ICA/M1 under 8 h with NIHSS ≥6");
+    } else if (h < 24) {
+      if (n <= 5) push("STEP_A", "ICA/M1 in the 8–24 h window with NIHSS 0–5");
+      if (n >= 6 && n <= 25) push("ATHENA", "ICA/M1 at 8–24 h with NIHSS 6–25");
+    }
+  }
+  if (site === "M2_D" && h < 24 && n >= 6 && n <= 25) {
+    push("ATHENA", "Dominant M2 within 24 h with NIHSS 6–25");
+  }
+  if (site === "M2_ND" || site === "M3") {
+    if (h < 4.5 && arrival === "transfer" && n >= 6) push("DUSK", "Distal MCA transfer arriving under 4.5 h with NIHSS ≥6");
+    if (h < 4.5 && arrival === "ed" && n >= 8) push("STEP_B", "Distal MCA direct to ED under 4.5 h with NIHSS ≥8");
+    if (h >= 4.5 && h < 12 && n >= 6) push("DUSK", "Distal MCA at 4.5–12 h with NIHSS ≥6");
+    if (h >= 12 && h < 24 && n >= 8) push("STEP_B", "Distal MCA at 12–24 h with NIHSS ≥8");
+  }
+  if ((site === "ACA" || site === "PCA") && h < 12 && n >= 6) push("DUSK", "ACA/PCA under 12 h with NIHSS ≥6");
+  if (site === "VERT" && h < 8 && n >= 6) push("RP_PIVOTAL", "Vertebral under 8 h with NIHSS ≥6");
+  if (site === "BASILAR" && h < 8 && n >= 6) push("RP_PIVOTAL", "Basilar under 8 h with NIHSS ≥6");
+
+  return out;
+}
+
+/* ============================================================================
+   SCREEN — site, clock, NIHSS and exclusions are hard. Age and mRS warn only.
+   ========================================================================== */
+
+function screenTrial(t, p) {
+  const hard = [], soft = [];
+
+  if (!t.sites.includes(p.site)) hard.push(SITE_LABEL[p.site] + " is not a target vessel");
+
+  if (p.hours !== "") {
+    const h = Number(p.hours);
+    if (h > t.window[1]) hard.push(h + " h is past the " + t.window[1] + " h window");
+  }
+  if (p.nihss !== "") {
+    const n = Number(p.nihss);
+    if (t.nihss[0] !== null && n < t.nihss[0]) hard.push("NIHSS " + n + " is below the floor of " + t.nihss[0]);
+    if (t.nihss[1] !== null && n > t.nihss[1]) hard.push("NIHSS " + n + " is above the ceiling of " + t.nihss[1]);
+  }
+  if (p.age !== "") {
+    const a = Number(p.age);
+    if (t.age[0] !== null && a < t.age[0]) soft.push("Age " + a + " is under the trial minimum of " + t.age[0]);
+    if (t.age[1] !== null && a > t.age[1]) soft.push("Age " + a + " is over the trial maximum of " + t.age[1]);
+  }
+  if (p.mrs !== "") {
+    const m = Number(p.mrs);
+    if (m < t.mrs[0]) soft.push("Pre-stroke mRS " + m + " is below the trial range of " + t.mrs[0] + "–" + t.mrs[1]);
+    if (m > t.mrs[1]) soft.push("Pre-stroke mRS " + m + " is over the trial limit of " + t.mrs[1]);
+  }
+
+  t.excl.filter(f => p.flags[f]).forEach(f => hard.push(FLAG_LABEL[f]));
+
+  let status;
+  if (hard.length) status = "out";
+  else if (p.site && p.hours !== "" && p.nihss !== "") status = "in";
+  else status = "pending";
+
+  return { status, hard, soft };
+}
+
+/* ========================================================================== */
+
+const state = { site:"", hours:"", nihss:"", age:"", mrs:"", arrival:"ed", flags:{}, open:null, openEx:{} };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const $ = id => document.getElementById(id);
+
+$("sites").innerHTML = SITES.map(s => `<button class="choice" data-site="${s.id}" aria-pressed="false">${esc(s.label)}</button>`).join("");
+$("arrival").innerHTML = [["ed","Direct to our ED"],["transfer","Transfer in"]].map(([id,l]) => `<button class="choice" data-arrival="${id}" aria-pressed="${id==="ed"}">${l}</button>`).join("");
+$("mrs").innerHTML = [0,1,2,3,4,5].map(n => `<button class="choice" data-mrs="${n}" aria-pressed="false" style="text-align:center;padding:10px 4px">${n}</button>`).join("");
+
+$("sites").addEventListener("click", e => {
+  const b = e.target.closest("[data-site]"); if (!b) return;
+  state.site = state.site === b.dataset.site ? "" : b.dataset.site;
+  syncControls(); render();
+});
+$("arrival").addEventListener("click", e => {
+  const b = e.target.closest("[data-arrival]"); if (!b) return;
+  state.arrival = b.dataset.arrival; syncControls(); render();
+});
+$("mrs").addEventListener("click", e => {
+  const b = e.target.closest("[data-mrs]"); if (!b) return;
+  state.mrs = state.mrs === b.dataset.mrs ? "" : b.dataset.mrs;
+  syncControls(); render();
+});
+["hours","nihss","age"].forEach(k => $(k).addEventListener("input", e => { state[k] = e.target.value; render(); }));
+$("reset").addEventListener("click", () => {
+  Object.assign(state, { site:"", hours:"", nihss:"", age:"", mrs:"", arrival:"ed", flags:{}, open:null, openEx:{} });
+  ["hours","nihss","age"].forEach(k => $(k).value = "");
+  syncControls(); render();
+});
+
+function syncControls() {
+  $("sites").querySelectorAll("[data-site]").forEach(b => b.setAttribute("aria-pressed", b.dataset.site === state.site));
+  $("arrival").querySelectorAll("[data-arrival]").forEach(b => b.setAttribute("aria-pressed", b.dataset.arrival === state.arrival));
+  $("mrs").querySelectorAll("[data-mrs]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mrs === state.mrs));
+  $("arrivalField").hidden = !(state.site === "M2_ND" || state.site === "M3");
+}
+
+/* ---- render ---- */
+
+function render() {
+  const ready = state.site && state.hours !== "" && state.nihss !== "";
+
+  const results = Object.values(TRIALS)
+    .map(t => Object.assign({ trial: t }, screenTrial(t, state)))
+    .sort((a,b) => {
+      const rank = { in:0, pending:1, out:2 };
+      if (rank[a.status] !== rank[b.status]) return rank[a.status] - rank[b.status];
+      return a.hard.length - b.hard.length;
+    });
+  const byId = Object.fromEntries(results.map(r => [r.trial.id, r]));
+
+  const raw = ready ? centerRoute({ site: state.site, hours: Number(state.hours), nihss: Number(state.nihss), arrival: state.arrival, mrs: state.mrs }) : [];
+  const live    = raw.filter(r => byId[r.id].status !== "out");
+  const blocked = raw.filter(r => byId[r.id].status === "out");
+
+  /* ---------- STEPS 2 + 3 ---------- */
+  let c = `<div class="panel-head"><div class="step" style="margin-bottom:0"><span class="n">2</span><h2>Consider</h2></div></div>`;
+
+  /* nudge: mRS blank on a vessel/window/NIHSS combination TESTED could take */
+  const testedPossible = state.mrs === "" && ready
+    && ["ICA","M1","M2_D"].includes(state.site)
+    && Number(state.hours) < 24 && Number(state.nihss) >= 6;
+  if (testedPossible) {
+    c += `<p class="nudge">Pre-stroke mRS not entered. If this patient was already disabled at mRS 3–4, TESTED is the
+      only trial that takes them — and the only one you'd miss by leaving mRS blank.</p>`;
+  }
+
+  if (!ready) {
+    c += `<p class="panel-body-msg">Enter site, time and NIHSS to get a route.</p>`;
+  } else if (!live.length && !blocked.length) {
+    c += `<p class="panel-body-msg">No branch on the card covers ${esc(SITE_LABEL[state.site])} at ${esc(state.hours)} h
+      with NIHSS ${esc(state.nihss)}. Check the protocol screen below — a trial may still take them even when the card
+      doesn't route there.</p>`;
+  }
+
+  c += live.map((r, i) => {
+    const t = TRIALS[r.id], tone = TONE[t.tone], res = byId[r.id];
+    const open = !!state.openEx[t.id];
+    const n = t.excl.length;
+
+    const soft = res.soft.length ? `<div class="softbox">${res.soft.map(s => `<p>${esc(s)}</p>`).join("")}</div>` : "";
+    const list = open
+      ? `<div class="exlist">${t.excl.map(f =>
+          `<label><input type="checkbox" data-flag="${f}"${state.flags[f] ? " checked" : ""}><span>${esc(FLAG_LABEL[f])}</span></label>`
+        ).join("")}</div>`
+      : "";
+
+    return `<div class="tblock"><div class="tbar" style="background:${tone.bar}"></div>
+      <div class="tbody">
+        <span class="chip" style="background:${tone.bar};color:${tone.chipInk}">${t.name}</span>
+        ${i===0 && live.length>1 ? `<span class="tag">closest fit</span>` : ``}
+        <p class="why">${esc(r.why)}</p>
+        ${soft}
+        <div class="exbar">
+          <button class="exhead" data-ex="${t.id}" aria-expanded="${open}">
+            <span class="lead"><span class="n">3</span><span class="t">Exclusions</span></span>
+            <span class="right"><span class="s">${n} to check</span><span class="chev"></span></span>
+          </button>
+          ${list}
+          ${open ? `<p class="cleared">Nothing ticked — clears all ${n}.</p>` : ``}
+        </div>
+      </div></div>`;
+  }).join("");
+
+  if (blocked.length) {
+    c += `<div class="ruled"><p class="lbl">RULED OUT</p><ul>${blocked.map(b =>
+      `<li><span>·</span><span><span class="bold">${TRIALS[b.id].name}</span>: ${esc(byId[b.id].hard.join(", "))}</span></li>`
+    ).join("")}</ul></div>`;
+  }
+  $("consider").innerHTML = c;
+
+  /* ---------- AFTER THE CASE ---------- */
+  const P = POST_CASE;
+  let pOut = null;
+  if (state.age !== "" && Number(state.age) < P.age[0]) pOut = "age " + state.age + " is under 18";
+  else if (state.hours !== "" && Number(state.hours) >= P.punctureWindow) pOut = "already " + state.hours + " h from last known well, so puncture can't fall inside 8 h";
+
+  const met = !pOut && state.hours !== "" && Number(state.hours) < P.punctureWindow;
+  const pOpen = !!state.openEx[P.id];
+
+  $("postPanel").innerHTML = `<div class="post${met ? " met" : ""}">
+    <div class="pbar"></div>
+    <div class="pbody">
+      <div class="ptop">
+        <span class="pname">${P.name}</span>
+        <span class="pkicker">after the case · proceduralist's call</span>
+      </div>
+      <p class="pmsg">${met
+        ? "If a Route 92 system went in on the first pass, this is an enrollment. 72 h from the procedure to consent."
+        : pOut
+          ? "Not a candidate — " + esc(pOut) + "."
+          : "Depends on the device used on the first pass. Enter time from last known well to check the 8 h puncture window."}</p>
+      <button class="pmore" data-ex="${P.id}">${pOpen ? "hide criteria" : "criteria"}</button>
+      ${pOpen ? `<ul>${P.core.map(x => `<li><span class="b">·</span>${esc(x)}</li>`).join("")}</ul>
+        <ul><li><span class="b">·</span>${esc(P.notes)}</li><li><span class="b">·</span>${esc(P.todo)}</li></ul>
+        <div class="srcs">${(SOURCES[P.id]||[]).map(x => `<a href="${x.url}" target="_blank" rel="noopener noreferrer">${esc(x.label)}</a>`).join("")}</div>` : ``}
+    </div></div>`;
+
+  /* ---------- PROTOCOL SCREEN ---------- */
+  const routedIds = new Set(raw.map(r => r.id));
+  let s = `<div class="panel-head divide">
+    <div class="step" style="margin-bottom:0"><h2>Protocol screen</h2></div>
+    <p style="font-size:13px;color:var(--muted);margin:2px 0 0">All trials, regardless of what the card says. Tap one for its criteria.</p></div>`;
+
+  s += results.map(({ trial: t, status, hard, soft }) => {
+    const tone = TONE[t.tone], open = state.open === t.id;
+    const line = status === "in" ? "Clears site, clock, NIHSS and every exclusion ticked."
+               : status === "pending" ? "Nothing rules it out yet."
+               : esc(hard[0]) + (hard.length > 1 ? ` · +${hard.length-1} more` : "");
+
+    let d = "";
+    if (open) {
+      const facts = [
+        ["Window", `0–${t.window[1]} h`],
+        ["NIHSS", t.nihss[1] ? `${t.nihss[0]}–${t.nihss[1]}` : `≥${t.nihss[0]}`],
+        ["Age", t.age[1] ? `${t.age[0]}–${t.age[1]}` : `≥${t.age[0]}`],
+        ["Pre mRS", t.mrs[0] === 0 ? `0–${t.mrs[1]}` : `${t.mrs[0]}–${t.mrs[1]}`]
+      ];
+      const src = SOURCES[t.id] || [];
+      d = `<div class="detail">
+        <p class="full">${esc(t.full)}</p>
+        <dl class="facts">${facts.map(([k,v]) => `<div class="fact"><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>
+        <p class="lbl2">Vessels</p>
+        <p class="val">${t.sites.map(x => esc(SITE_LABEL[x])).join(" · ")}</p>
+        <p class="lbl2">Also required</p>
+        <ul>${t.core.map(x => `<li><span class="b">·</span>${esc(x)}</li>`).join("")}</ul>
+        ${hard.length ? `<p class="lbl2">Blocking right now</p><ul>${hard.map(x => `<li class="block"><span>·</span>${esc(x)}</li>`).join("")}</ul>` : ``}
+        ${t.notes ? `<p class="note">${esc(t.notes)}</p>` : ``}
+        <div class="srcs">${src.length
+          ? src.map(x => `<a href="${x.url}" target="_blank" rel="noopener noreferrer">${esc(x.label)}</a>`).join("")
+          : `<span class="none">No source link yet — add your protocol URL to the SOURCES block.</span>`}</div>
+      </div>`;
+    }
+
+    return `<div class="trial-row">
+      <button class="trial-btn" data-trial="${t.id}" aria-expanded="${open}">
+        <span class="dot ${status}"></span>
+        <span style="flex:1;min-width:0">
+          <span class="trial-name ${status==="out"?"out":""}" style="${status==="out"?"":"color:"+tone.text}">${t.name}</span>
+          ${routedIds.has(t.id) ? `<span class="tag">on the card</span>` : ``}
+          <span class="trial-meta">${esc(t.nct)}</span>
+          <p class="trial-line ${status==="out"?"out":""}">${line}</p>
+          ${soft.length && status!=="out" ? `<p class="trial-line warn">${esc(soft[0])}${soft.length>1?` · +${soft.length-1} more`:``}</p>` : ``}
+        </span>
+      </button>${d}</div>`;
+  }).join("");
+  $("screenPanel").innerHTML = s;
+
+  /* ---- rebind ---- */
+  $("consider").querySelectorAll("[data-ex]").forEach(b => b.addEventListener("click", () => {
+    state.openEx[b.dataset.ex] = !state.openEx[b.dataset.ex]; render();
+  }));
+  $("consider").querySelectorAll("[data-flag]").forEach(cb => cb.addEventListener("change", () => {
+    state.flags[cb.dataset.flag] = cb.checked; render();
+  }));
+  $("postPanel").querySelectorAll("[data-ex]").forEach(b => b.addEventListener("click", () => {
+    state.openEx[b.dataset.ex] = !state.openEx[b.dataset.ex]; render();
+  }));
+  $("screenPanel").querySelectorAll("[data-trial]").forEach(b => b.addEventListener("click", () => {
+    state.open = state.open === b.dataset.trial ? null : b.dataset.trial; render();
+  }));
+}
+
+syncControls();
+render();
+</script>
+</body>
+</html>
